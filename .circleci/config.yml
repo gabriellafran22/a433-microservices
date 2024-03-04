@@ -32,9 +32,9 @@ jobs:
       - run:
           name: Build and Push Docker Image
           command: |
-            docker build -t gabriellafran22/karsajobs-ci:latest -t ghcr.io/gabriellafran22/karsajobs-ci:latest .
+            docker build -t gabriellafran22/karsajobs:latest -t ghcr.io/gabriellafran22/karsajobs:latest .
             echo $GITHUB_TOKEN | docker login ghcr.io -u gabriellafran22 --password-stdin
-            docker push ghcr.io/gabriellafran22/karsajobs-ci:latest
+            docker push ghcr.io/gabriellafran22/karsajobs:latest
 
 workflows:
   version: 2
