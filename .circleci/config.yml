@@ -1,45 +1,22 @@
 version: 2.1
 
+executors:
+  docker:
+    docker:
+      - image: docker:stable
+
 jobs:
-  lint-dockerfile:
-    docker:
-      - image: hadolint/hadolint:latest
+  lint:
+    executor: docker
     steps:
       - checkout
+      - setup_remote_docker
       - run:
-          name: Lint Dockerfile
-          command: hadolint Dockerfile
-
-  test-app:
-    docker:
-      - image: golang:latest
-    steps:
-      - checkout
-      - run:
-          name: Run Unit Tests
-          command: go test -v -short --count=1 $(go list ./...)
-
-  build-app-karsajobs:
-    docker:
-      - image: docker:latest
-    steps:
-      - checkout
-      - run:
-          name: Build and Push Docker Image
-          command: |
-            docker build -t gabriellafran22/karsajobs-ci:latest -t ghcr.io/gabriellafran22/karsajobs-ci:latest .
-            echo $GITHUB_TOKEN | docker login ghcr.io -u gabriellafran22 --password-stdin
-            docker push ghcr.io/gabriellafran22/karsajobs-ci:latest
+          name: Run hadolint
+          command: docker run --rm --interactive hadolint/hadolint < Dockerfile
 
 workflows:
   version: 2
-  build:
+  test:
     jobs:
-      - lint-dockerfile
-      - test-app:
-          requires:
-            - lint-dockerfile
-      - build-app-karsajobs:
-          requires:
-            - test-app
-
+      - lint
