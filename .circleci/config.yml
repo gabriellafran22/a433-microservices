@@ -1,0 +1,45 @@
+version: 2.1
+
+jobs:
+  lint-dockerfile:
+    docker:
+      - image: hadolint/hadolint:latest
+    steps:
+      - checkout
+      - run:
+          name: Lint Dockerfile
+          command: hadolint Dockerfile
+
+  test-app:
+    docker:
+      - image: golang:latest
+    steps:
+      - checkout
+      - run:
+          name: Run Unit Tests
+          command: go test -v -short --count=1 $(go list ./...)
+
+  build-app-karsajobs:
+    docker:
+      - image: docker:latest
+    steps:
+      - checkout
+      - run:
+          name: Build and Push Docker Image
+          command: |
+            docker build -t gabriellafran22/karsajobs-ci:latest -t ghcr.io/gabriellafran22/karsajobs-ci:latest .
+            echo $GITHUB_TOKEN | docker login ghcr.io -u gabriellafran22 --password-stdin
+            docker push ghcr.io/gabriellafran22/karsajobs-ci:latest
+
+workflows:
+  version: 2
+  build:
+    jobs:
+      - lint-dockerfile
+      - test-app:
+          requires:
+            - lint-dockerfile
+      - build-app-karsajobs:
+          requires:
+            - test-app
+
