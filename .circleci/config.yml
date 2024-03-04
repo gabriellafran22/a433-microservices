@@ -1,0 +1,37 @@
+version: 2.1
+
+executors:
+  docker:
+    docker:
+      - image: docker:stable
+
+jobs:
+  lint-dockerfile:
+    executor: docker
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Run hadolint
+          command: docker run --rm --interactive hadolint/hadolint < Dockerfile
+
+  build-app:
+    executor: docker
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Build and Push Docker Image
+          command: |
+            docker build -t gabriellafran22/karsajobs-ui:latest -t ghcr.io/gabriellafran22/karsajobs-ui:latest .
+            echo $GITHUB_TOKEN | docker login ghcr.io -u gabriellafran22 --password-stdin
+            docker push ghcr.io/gabriellafran22/karsajobs-ui:latest
+
+workflows:
+  version: 2
+  test:
+    jobs:
+      - lint-dockerfile
+      - build-app:
+          requires:
+            - lint-dockerfile
