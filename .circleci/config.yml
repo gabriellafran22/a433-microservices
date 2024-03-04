@@ -25,8 +25,7 @@ jobs:
           command: go test -v -short --count=1 $(go list ./...)
 
   build-app:
-    docker:
-      - image: docker:latest
+    executor: docker
     steps:
       - checkout
       - run:
