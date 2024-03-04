@@ -6,7 +6,7 @@ executors:
       - image: docker:stable
 
 jobs:
-  lint:
+  lint-dockerfile:
     executor: docker
     steps:
       - checkout
@@ -15,8 +15,35 @@ jobs:
           name: Run hadolint
           command: docker run --rm --interactive hadolint/hadolint < Dockerfile
 
+  test-app:
+    docker:
+      - image: golang:latest
+    steps:
+      - checkout
+      - run:
+          name: Run Unit Tests
+          command: go test -v -short --count=1 $(go list ./...)
+
+  build-app:
+    docker:
+      - image: docker:latest
+    steps:
+      - checkout
+      - run:
+          name: Build and Push Docker Image
+          command: |
+            docker build -t gabriellafran22/karsajobs-ci:latest -t ghcr.io/gabriellafran22/karsajobs-ci:latest .
+            echo $GITHUB_TOKEN | docker login ghcr.io -u gabriellafran22 --password-stdin
+            docker push ghcr.io/gabriellafran22/karsajobs-ci:latest
+
 workflows:
   version: 2
   test:
     jobs:
-      - lint
+      - lint-dockerfile
+      - test-app:
+          requires:
+            - lint-dockerfile
+      - build-app:
+          requires:
+            - test-app
